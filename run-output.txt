@@ -1,0 +1,89 @@
+
+---- TC1. Thêm thiết bị vào repository ----
+  Máy chiếu:
+    - ProjectorRemote[id=PR01, name=ĐK máy chiếu Epson, location=Tủ A - Tầng 2, status=Available, score=45.0]
+    - ProjectorRemote[id=PR02, name=ĐK máy chiếu Sony, location=Tủ A - Tầng 2, status=Available, score=90.0]
+    - ProjectorRemote[id=PR03, name=ĐK máy chiếu Panasonic, location=Tủ B - Tầng 3, status=Available, score=15.0]
+  Điều hòa:
+    - AirConditionerRemote[id=AC01, name=ĐK điều hòa Daikin, location=Phòng thiết bị A, status=Available, score=100.0]
+    - AirConditionerRemote[id=AC02, name=ĐK điều hòa Panasonic, location=Phòng thiết bị B, status=Available, score=100.0]
+  Micro:
+    - WirelessMicrophone[id=MIC01, name=Micro Shure, location=Tủ C, status=Available, score=75.0]
+    - WirelessMicrophone[id=MIC02, name=Micro Sennheiser, location=Tủ C, status=Available, score=57.5]
+    - WirelessMicrophone[id=MIC03, name=Micro Rode, location=Tủ D, status=Available, score=77.5]
+  [PASS] Kho máy chiếu có 3 phần tử
+  [PASS] Kho điều hòa có 2 phần tử
+  [PASS] Kho micro có 3 phần tử
+  [PASS] Thêm null bị từ chối (IllegalArgumentException)
+
+---- TC2. Thử thêm thiết bị trùng mã ----
+  Bắt được: Mã PR01 đã tồn tại. (duplicateId=PR01)
+  [PASS] Ném DuplicateIdException với duplicateId = PR01
+  [PASS] Số phần tử không đổi sau khi thêm trùng
+
+---- TC3. Tìm thiết bị theo mã ----
+  findById("AC02") -> AirConditionerRemote[id=AC02, name=ĐK điều hòa Panasonic, location=Phòng thiết bị B, status=Available, score=100.0]
+  [PASS] Tìm thấy AC02
+  [PASS] Không tìm thấy mã XYZ -> null
+  [PASS] remove mã không tồn tại -> false
+
+---- TC4. Lọc các thiết bị sẵn sàng ----
+  Máy chiếu sẵn sàng:
+    - ProjectorRemote[id=PR01, name=ĐK máy chiếu Epson, location=Tủ A - Tầng 2, status=Available, score=45.0]
+    - ProjectorRemote[id=PR02, name=ĐK máy chiếu Sony, location=Tủ A - Tầng 2, status=Available, score=90.0]
+  Micro sẵn sàng:
+    - WirelessMicrophone[id=MIC01, name=Micro Shure, location=Tủ C, status=Available, score=75.0]
+    - WirelessMicrophone[id=MIC03, name=Micro Rode, location=Tủ D, status=Available, score=77.5]
+  [PASS] Máy chiếu sẵn sàng = [PR01, PR02] (PR03 pin 15% < 20%)
+  [PASS] Micro sẵn sàng = [MIC01, MIC03] (MIC02 pin 25% < 30%)
+  [PASS] getAll() trả danh sách chỉ đọc
+
+---- TC5. Chọn điều khiển máy chiếu có điểm cao nhất ----
+  Được cấp: ProjectorRemote[id=PR02, name=ĐK máy chiếu Sony, location=Tủ A - Tầng 2, status=Borrowed, score=90.0]
+  [PASS] Chọn PR02 (pin 90%)
+
+---- TC6. Chọn điều khiển điều hòa tương thích với phòng A203 ----
+  Được cấp: AirConditionerRemote[id=AC01, name=ĐK điều hòa Daikin, location=Phòng thiết bị A, status=Borrowed, score=100.0]
+  [PASS] Chọn AC01 (tương thích A203)
+
+---- TC7. Chọn micro đầu tiên sẵn sàng (FirstAvailableStrategy) ----
+  Được cấp: WirelessMicrophone[id=MIC01, name=Micro Shure, location=Tủ C, status=Borrowed, score=75.0]
+  [PASS] Chọn MIC01 (micro sẵn sàng đầu tiên)
+
+---- TC8. Đổi chiến lược trong thời gian chạy ----
+  Đã trả MIC01, trạng thái: Available
+  Sau khi đổi sang HighestPriority, được cấp: WirelessMicrophone[id=MIC03, name=Micro Rode, location=Tủ D, status=Borrowed, score=77.5]
+  [PASS] Cùng dữ liệu: First -> MIC01, Highest -> MIC03 (77.5 > 75.0)
+  Máy chiếu sau khi đổi sang FirstAvailable, được cấp: ProjectorRemote[id=PR01, name=ĐK máy chiếu Epson, location=Tủ A - Tầng 2, status=Borrowed, score=45.0]
+  [PASS] Máy chiếu: FirstAvailable chọn PR01
+
+---- TC9. Cấp phát khi không có ứng viên phù hợp ----
+  Bắt được: Không có ứng viên đầu tiên để chọn.
+  [PASS] Máy chiếu hết ứng viên -> NoSuitableItemException
+  [PASS] Điều hòa cho phòng C999 -> NoSuitableItemException
+  [PASS] Mượn trực tiếp PR03 (pin thấp) -> DeviceNotReadyException
+  [PASS] Trả thiết bị chưa mượn (MIC02) -> IllegalStateException
+
+---- TC10. Thiết bị được chọn chuyển sang Borrowed ----
+  PR02: Borrowed, AC01: Borrowed, MIC03: Borrowed, AC02: Available
+  [PASS] PR02 Borrowed
+  [PASS] AC01 Borrowed
+  [PASS] MIC03 Borrowed
+  [PASS] AC02 (không được chọn) vẫn Available
+  [PASS] Sau khi trả, AC01 về Available
+
+---- TC11. Repository/Service tổng quát dùng cho nhiều loại thiết bị ----
+  [PASS] Cùng lớp InMemoryRepository cho ProjectorRemote/AirConditionerRemote/WirelessMicrophone
+  Tất cả thiết bị sẵn sàng:
+    - AirConditionerRemote[id=AC01, name=ĐK điều hòa Daikin, location=Phòng thiết bị A, status=Available, score=100.0]
+    - AirConditionerRemote[id=AC02, name=ĐK điều hòa Panasonic, location=Phòng thiết bị B, status=Available, score=100.0]
+    - WirelessMicrophone[id=MIC01, name=Micro Shure, location=Tủ C, status=Available, score=75.0]
+  [PASS] Kho chung chứa 8 thiết bị thuộc 3 loại
+  Loại mới được cấp: InteractiveDisplayRemote[id=ID02, name=ĐK màn hình LG CreateBoard, location=Tủ E, status=Borrowed, score=70.0]
+  [PASS] Loại mới InteractiveDisplayRemote cấp phát được ID02
+  [PASS] Chiến lược không thay đổi danh sách đầu vào
+  [PASS] Danh sách rỗng -> NoSuitableItemException
+
+==================================================
+KẾT QUẢ: 31 PASS, 0 FAIL
+==================================================
